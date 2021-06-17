@@ -129,15 +129,15 @@ For the tools, server and probe side, to run, parameters must be used. The param
 An example for the **env.list** file is
 
 ``` bash
-    # Variables for the probe_server and probe containers
-    server_ip=1.1.1.1
-    server_prt=5000
-    user_name=admin
-    passwd=PASSWORD
-    db_server=2.2.2.2
-    token=UrBMNS04-SgCPGZOoFlww1EIo2UKz-LqhBB-LGSGTL6SqTL-1zn3Uyll7k-qR_q2Mx5YQeVIx8peSWx1y44ZcA==
-    org=performance
-    bucket=cvms
+# Variables for the probe_server and probe containers
+server_ip=1.1.1.1
+server_prt=5000
+user_name=admin
+passwd=PASSWORD
+db_server=2.2.2.2
+token=UrBMNS04-SgCPGZOoFlww1EIo2UKz-LqhBB-LGSGTL6SqTL-1zn3Uyll7k-qR_q2Mx5YQeVIx8peSWx1y44ZcA==
+org=performance
+bucket=cvms
 ```
 
 ## Running the probe server
