@@ -13,11 +13,10 @@ app.config['SECRET_KEY'] = 'you-will-never-guess'
 
 # Get the InfluxDB Client session up and running
 # You can generate a Token from the "Tokens Tab" in the UI
-token = os.environ['token']
-db_server=os.environ['db_server']
-org = os.environ['org']
-bucket = os.environ['bucket']
-
+token = "1jgkOXHTtJjeHQCpIgB6GCYaBYKW-7MUZqKi0ORFEx4goAPTu3Jiq5UNMhcZwaw3e-oADJOPZATNaAavXV21nw=="
+org = "measurement"
+bucket = "data-cvm"
+db_server="127.0.0.1"
 client = InfluxDBClient(url="http://"+db_server+":8086", token=token)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
@@ -26,27 +25,17 @@ write_api = client.write_api(write_options=SYNCHRONOUS)
 @app.route("/", methods=['POST'])
 def input_json():
     json_data=request.get_json()
-    if "temp" in json_data:
-
-        temp=json_data['temp']
-        name=json_data['name']
-        return_payload={'Name': name,'Temp': temp}
-        write_api.write(bucket, org, [
-            {"measurement": "temp", "tags": {"hostname": name}, "fields": {"temp": float(temp)}}])
-    else:
-        ping=json_data['ping']
-        upload=json_data['upload']
-        download=json_data['download']
-
-        return_payload={
-                    'ping': ping,
-                    'upload': upload,
-                    'download': download
-        }
-        write_api.write(bucket, org, [
-            {"measurement": "internet", "tags": {"speed":"speed"}, "fields": {"ping": float(ping),"upload":float(upload),"download":float(download)}}])
+    name=json_data['cvm_name']
+    cpu=json_data['cpu']
+    cpu_ready=json_data['cpu_ready']
+    ram=json_data['ram']
+    io_read=json_data['io_read']
+    io_write=json_data['io_write']
+    write_api.write(bucket, org, [
+            {"measurement": "performance", "tags": {"cvm-name": name}, "fields": {"cpu": float(cpu),"cpu_ready": float(cpu_ready),"ram": float(ram),"io_read": float(io_read),"io_write": float(io_write)}}])
+    return_payload={'name':name,'cpu':cpu,'cpu_ready':cpu_ready,'ram':ram,'io_read':io_read,'io_write':io_write}
     return json.dumps(return_payload)
-
+    
 @app.route("/", methods=['GET'])
 def input():
 
