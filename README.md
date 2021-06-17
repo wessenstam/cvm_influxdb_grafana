@@ -25,6 +25,7 @@ To grab the needed files, follow these steps:
 1. Create a directory in which you want to store the files from the cloned repo, but also the files for InfluxDB and Grafana (persistent storage) (example /docker-data/)
 2. ``cd`` into the newly created directory
 3. Run ``git clone https://github.com/wessenstam/cvm_influxdb_grafana``. this will clone the dat from the repository on Github
+4. ``cd`` into the repo cloned directory (cvm_influxdb_grafana)
 
 ## Build the containers
 
@@ -42,6 +43,40 @@ For the tools, server and probe side, to run, parameters must be used. The param
 6. db_server = IP addess of the InfluxDB server, if runing as a container, this si the IP address of the Machine running the container
 7. org = Organisation as defined in InfluxDB
 8. bucket = The name of the bucket as defined in the InfluxDB
+
+## Running with a separate InfluxDB and Grafana environment
+This chapter is only needed if the tool is not using an existing InfluxDB and Grafana emvironment by using InfluxDB and Grafana as containers.
+
+1. Check docker-compose is installed on the machine by typing ``docker-compose``. If not installed, install it.
+2. The current content of the cloned docker-compose.yaml file is
+
+   ```bash
+    version: '3'
+
+    services:
+      grafana:
+        image: grafana/grafana
+        container_name: grafana
+        depends_on:
+          - influxdb
+        ports:
+          - 3000:3000
+        volumes:
+          - ${PWD}/docker_data/grafana_data:/var/lib/grafana
+        restart: always
+    
+      influxdb:
+        image: quay.io/influxdb/influxdb:v2.0.7
+        container_name: influxdb
+        ports:
+          - 8086:8086
+        volumes:
+          - ${PWD}/docker_data/influxdb:/root/.influxdbv2/
+        restart: always
+    ```
+    This will create persistent data stores for InfluxDB and Grafana under the **current directory/docker-data** via the **${PWD}** parameter. Change this parameter if it should be stored somewhere else by opening the file and saving it.
+
+3. Run ``docker-compose create`` to get the containerized environment build according to the yaml file
 
 ## Running the probe server
 Run the probing server using the below command where the following parameters must be set:
