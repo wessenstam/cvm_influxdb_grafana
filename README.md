@@ -189,6 +189,7 @@ from(bucket: "cvms")
   |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
   |> yield(name: "mean")
 ```
+  !(https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/1.png)
 
 ## Grafana - Configure the dashboard
 
@@ -199,6 +200,7 @@ Open the Grafana interface, login if needed with the newly set password for the 
 3. Half way the page the Data source is shown. By default that should say InfluxDB. Your earlier configured InfluxDB
 4. Click in the text field and copy the FLUXDB query you copied from the InfluxDB Interface
 
+   !(https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/1.png)
    
    
 5. 
