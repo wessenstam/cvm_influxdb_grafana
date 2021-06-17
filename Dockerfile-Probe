@@ -1,6 +1,6 @@
 FROM alpine
 
-MAINTAINER Willem Essenstam <wessenstam.at@gmail.com>
+MAINTAINER Willem Essenstam <willem.at@nutanix.com>
 
 # Get the to be needed stuff in
 RUN apk add --no-cache python3 git openssl openssh py3-pip&& \

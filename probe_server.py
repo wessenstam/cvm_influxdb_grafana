@@ -13,10 +13,10 @@ app.config['SECRET_KEY'] = 'you-will-never-guess'
 
 # Get the InfluxDB Client session up and running
 # You can generate a Token from the "Tokens Tab" in the UI
-token = "1jgkOXHTtJjeHQCpIgB6GCYaBYKW-7MUZqKi0ORFEx4goAPTu3Jiq5UNMhcZwaw3e-oADJOPZATNaAavXV21nw=="
-org = "measurement"
-bucket = "data-cvm"
-db_server="127.0.0.1"
+token = os.environ['token']
+org = os.environ['org']
+bucket = os.environ['bucket']
+db_server=os.environ['db_server']
 client = InfluxDBClient(url="http://"+db_server+":8086", token=token)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 

@@ -7,8 +7,6 @@ import json
 import urllib3
 import time
 import os
-import math
-import datetime
 
 #####################################################################################################################################################################
 # This function is to get the to see if the initialisation of the cluster has been run (EULA, PULSE, Network)

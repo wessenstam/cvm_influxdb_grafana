@@ -1,74 +1,59 @@
-# GTS Tools
+# CVM Monitoring tool
 
-This Repo exists out of five tools
+This Repo exists out of four tools
 
-1. server.py, server side of the measurement tool
+1. probe_server.py, server side of the measurement tool
 2. probe.py, probe side of the measurement tool
-3. Alertserver, keeps track of the thresholds and warns via Slack that a server has reached the threshold
-4. Independent InfluxDB for storing measurement data
-5. Independent Grafana for showing dashboards
+3. Independent InfluxDB for storing measurement data
+4. Independent Grafana for showing dashboards
 
-The order of starting/configuring is NOT the order in which the five tools are mentioned.
-Order is:
-1. InfluxDB and Grafana and configure
-2. Grab the InfluxDB Token, Org and Bucket
-3. Change the parameters to reflect these new values and start in order:
-    
-    1. probe-server (server.py)
-    2. probes (probe.py)
-    3. alertserver
-## server.py
-Server side of the probeing solution for the performance of the clusters we manage. Receives data from the probes and stores it into an InfluxDB. Can be run containerized and if needed native on the VM.
-### Usage
-Run the probing server using the below command where the following parameters must be set:
-
-1. token; token for the connection to the InfluxDB container
-2. db_server; the IP address of the InfluxDB server
-3. org; the Organuisation as defined in InfluxDB 
-4. bucket; the bucket in which the data has to be stored
-
-``docker run -d --rm --name probe-server -e token="INFLUXDB TOKEN" -e db_server="INFLUXDB IP" -e org=<ORG> -e bucket=<BUCKET> -p 5000:5000 wessenstam/gts2021-probe_server``
+## probe_server.py
+Python source code of the server side of solution for the performance of the CVMs in a cluster. Receives data from the probe(s) and stores it into an InfluxDB. Will be run containerized. To run natively on Linux VMs, the corresponding dockerfile (Dockerfile-Server) is providing the dependencies needed.
 ## probe.py
 Probe side that grabs the performance info from the cluster it checks and sends the data to the server side. Checks data every 5 minutes. Every probe will be checking 1 cluster. THis coud lead into many probe containers to be active at one time
-### Usage
-Make sure the file called ``cluster.txt`` has the correct parameters:
-``Cluster Name|IP Addresses for the PE``
+# Usage
 
-When starting the probe.py script, it needs environmental variables. These variables are:
+This chapter is describing what the pre-requirements are and how the tool should be used.
+## Prerequisites
+
+As the tools is made out of Docker containers, docker needs to be installed on the machine that will run the containers. The internet has lots of articles on how to install Docker on the O/S of your choice.
+
+By using Github, it is possible to pull the latest version on any machine. Therefore also git needs to be installed on the mahcine so the repo can be cloned. Depending on the use case, using a separate InfluxDb and/or Grafana environment, docker-compose also needs to be installed. The Github repo includes a docker-compose YAML file to start and run such an environemnt as Docker containers with persistent storage.
+## Getting the files needed for the tool
+To grab the needed files, follow these steps:
+
+1. Create a directory in which you want to store the files from the cloned repo, but also the files for InfluxDB and Grafana (persistent storage) (example /docker-data/)
+2. ``cd`` into the newly created directory
+3. Run ``git clone https://github.com/wessenstam/cvm_influxdb_grafana``. this will clone the dat from the repository on Github
+
+## Build the containers
+
+As the tool is container based, use the Dockerfile-Server and Dockerfile-Probe dockerfiles, using ``docker build -f <NAME OF THE FILE> -t <TAG NAME>`` to build the containers. The commands that are shown are examples. Exchange ``probe_xx`` to your name.
+
+## Parameters needed
+
+For the tools, server and probe side, to run, parameters must be used. The parameters need to be put in a file called **env.list**. The file needs to contain the following parameters and values:
+
 1. server_ip = IP of the server part (server.py) of the measurement tool
 2. server_prt= port on which the server is listening (default 5000, FLASK port)
-3. check_ip = What is the IP of the Nuutanix CLuster that needs to be checked?
-4. user_name = The username for the connection to the Nutanix Cluster (admin)
-5. passwd = Corresponding password for the connection ot the Nutanix Cluster
+3. user_name = The username for the connection to the Nutanix Cluster (admin)
+4. passwd = Corresponding password for the connection ot the Nutanix Cluster
+5. token = Token to access the InfluxDB server
+6. db_server = IP addess of the InfluxDB server, if runing as a container, this si the IP address of the Machine running the container
+7. org = Organisation as defined in InfluxDB
+8. bucket = The name of the bucket as defined in the InfluxDB
 
-All parameters must be put in a file called **env.list**. This file is being used by the **start_probe.sh** script
+## Running the probe server
+Run the probing server using the below command where the following parameters must be set:
 
-``start_probe.sh``
+``docker run -d --rm --name probe-server --env-file ./env.list -p 5000:5000 probe_server``
 
-If the probes need to be stopped, run
 
-``stop_probe.sh``
+## Tools starting order
 
-## Alertserver
-This alertserver is polling every minute the data in the InfluxDB server and checks to see if there is a Cluster which is crossing the threshold as set in the alertserver.env file (example is in the REPO). This file also holds the IP address and connection token for the InfluxDB. Besides these, also the Slack Token is mentioned in the file. The default parameters, for performance checing, are
-
-1. cpu_load=75 ; 75% CPU load
-2. ram_load=80 ; 80% RAM load
-3. io_load=10 ; 10ms IO Latency
-
-The values have to cross the threshold for 5 consequtive times before the error is throw and an alert is send to the Slack channel. The alertserver has to be run on the same VM as a docker container.
-### Usage
-To start the alertserver run:
-
-``docker run -d --rm --name alertserver --env-file alertserver.env wessenstam/alertserver:latest``
-
-## InfluxDB and Grafana
-Both InfluxDB and Grafana can be started using the docker-compose.yaml file using:
-
-This will start InfluxDB first and than the Grafana infra. Configuration has to be done afterwards.
-### Usage
-After installation of docker and docker-compose run:
-
-``docker-compose up -d``
-
-This will start the InfluxDB at port 8086 and Grafana at port 3000. Bith will have to be configured as a clean install if started for the first time.
+The order of starting the tools is
+1. InfluxDB and Grafana
+2. Configure InfluxDB and Grafana
+3. Grab the InfluxDB Token, Org and Bucket from the InlfuxDB interface
+4. Start the probe_server container
+5. Start the probe container
