@@ -155,3 +155,50 @@ Run the probe(s) using the below command:
 ```docker run -d --rm --name probe -v ${PWD}:/code --env-file ./env.list -e check_ip=<IP ADDRESS OF PE> probe```
 
 This command runs the probe container and it uses the "environmental variables" as mentioned in the **env.list** file. Besides those parameter and extra parameter is added. ``-e check_ip=<IP ADDRESS OF PE>`` is pointing to the IP address of one cluster. if there are multiple cluster, rerun the command using another IP address(ess) for the other cluster(s)
+
+## Checking the probe(s) and server
+On the machine where the containers are running, run ``docker logs -f probe-server`` this should show something like the below text
+
+``` bash
+172.17.0.1 - - [17/Jun/2021 11:59:42] "POST / HTTP/1.1" 200 -
+172.17.0.1 - - [17/Jun/2021 11:59:44] "POST / HTTP/1.1" 200 -
+172.17.0.1 - - [17/Jun/2021 11:59:45] "POST / HTTP/1.1" 200 -
+172.17.0.1 - - [17/Jun/2021 11:59:46] "POST / HTTP/1.1" 200 -
+```
+
+When you see this info, the probes can communicate with the Server AND the server can communicate with the InfluxDB. 
+
+If there are issues, check the logs of the containers using ```docker log probe``` for the probe and ```docker logs probe-server``` for the server side. You can also try to connect to port 5000 on the docker running machine. There should be no reply, but at least a connection.
+## InfluxDB - Checking the data ingestion
+
+Open the UI of InfluxDB and navigate to **Explore -> From -> cvms -> _measurement -> performance -> select under FILTER some fields -> Click Submit**. This should show some graphs. If it doesn't make sure to click the refresh button (the Circled Arrows)
+
+Now that there is data ingesting into the InfluxDB, Grafana needs to configured.
+
+For Grafana we need to get a InfluxDB query for the data that nees to be shown in a graph. The UI of InfluxDB can help with that.
+1. In the Filter Column, click one of the CVM that are shown. This will have an immediate effect on the graphs.
+2. Click the **Script Editor** button on the right hand side of the UI
+3. Copy the text as shown by the UI as we are going to use that in Grafana. Example would be
+
+``` sql
+from(bucket: "cvms")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "performance")
+  |> filter(fn: (r) => r["_field"] == "cpu" or r["_field"] == "cpu_ready" or r["_field"] == "io_read" or r["_field"] == "io_write" or r["_field"] == "ram")
+  |> filter(fn: (r) => r["cvm-name"] == "NTNX-16SM6B260127-A-CVM")
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")
+```
+
+## Grafana - Configure the dashboard
+
+Open the Grafana interface, login if needed with the newly set password for the admin user. Follow these steps to get everything running:
+
+1. Click on the **Four squares on the left hand side of the screen -> Manage -> New Dashboard**
+2. Click **Add an Empty panel**
+3. Half way the page the Data source is shown. By default that should say InfluxDB. Your earlier configured InfluxDB
+4. Click in the text field and copy the FLUXDB query you copied from the InfluxDB Interface
+
+   
+   
+5. 
