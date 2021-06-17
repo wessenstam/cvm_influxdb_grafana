@@ -9,14 +9,14 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ~/docker_data/grafana_data:/var/lib/grafana
+      - ${PWD}/docker_data/grafana_data:/var/lib/grafana
     restart: always
 
   influxdb:
-    image: quay.io/influxdb/influxdb
+    image: quay.io/influxdb/influxdb:v2.0.7
     container_name: influxdb
     ports:
       - 8086:8086
     volumes:
-      - ~/docker_data/influxdb:/root/.influxdbv2/
+      - ${PWD}/docker_data/influxdb:/root/.influxdbv2/
     restart: always
