@@ -180,16 +180,17 @@ For Grafana we need to get a InfluxDB query for the data that nees to be shown i
 2. Click the **Script Editor** button on the right hand side of the UI
 3. Copy the text as shown by the UI as we are going to use that in Grafana. Example would be
 
-``` sql
-from(bucket: "cvms")
-  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
-  |> filter(fn: (r) => r["_measurement"] == "performance")
-  |> filter(fn: (r) => r["_field"] == "cpu" or r["_field"] == "cpu_ready" or r["_field"] == "io_read" or r["_field"] == "io_write" or r["_field"] == "ram")
-  |> filter(fn: (r) => r["cvm-name"] == "NTNX-16SM6B260127-A-CVM")
-  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
-  |> yield(name: "mean")
-```
-  ![InfluxDB UI](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/1.png)
+   ``` sql
+   from(bucket: "cvms")
+     |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+     |> filter(fn: (r) => r["_measurement"] == "performance")
+     |> filter(fn: (r) => r["_field"] == "cpu" or r["_field"] == "cpu_ready" or r["_field"] == "io_read" or r["_field"] == "io_write" or r["_field"] == "ram")
+     |> filter(fn: (r) => r["cvm-name"] == "NTNX-16SM6B260127-A-CVM")
+     |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+     |> yield(name: "mean")
+   ```
+
+   ![InfluxDB UI](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/1.png)
 
 ## Grafana - Configure the dashboard
 
@@ -201,6 +202,80 @@ Open the Grafana interface, login if needed with the newly set password for the 
 4. Click in the text field and copy the FLUXDB query you copied from the InfluxDB Interface
 
    ![Grafana UI](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/2.png)
+
+The original SQL has to be changed slightly. So we have separate grpah for each of the five performance matrices. Also we want to be able to see all CVMs on the dashboard, and a row PER CVM.
+
+1. While still in the SQL field in Grafana
+2. Change the line ```|> filter(fn: (r) => r["_field"] == "cpu" or r["_field"] == "cpu_ready" or r["_field"] == "io_read" or r["_field"] == "io_write" or r["_field"] == "ram")``` into
+```|> filter(fn: (r) => r["_field"] == "cpu")```
+3. Change the following as well (right hand side of the UI)
    
-   
-5. 
+   1. **Title Panel** - CPU Load - CVM
+   1. **Unit** - Misc -> Percent (0-100)
+   1. Click Apply in th top right corner
+
+The first graph is now showing on the dashboard. To get the rest of the graphs AND have a dropdown box so all or just a few selected CVMs can be shown, follow these steps.
+### Grafana - configure and use variables
+
+1. Click the Cog icon in the top right corner
+1. Click **Variables -> Add Variables**
+1. Under General
+    1. **Name** - CVMName
+    1. **Type** - Custom
+    1. **Description** - CVM Names
+1. Under Custom options; **Values seperated by comma** - provide all names of the CVM as shown in the InfluxDB
+1. Under Selection options
+    1. **Multi-value** - Enabled
+    1. **Include All option** - Enabled
+1. Click the **Update** button
+
+   ![Grafana UI - Variables](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/3.png)
+
+1. Click on the left hand side **General**, provide a name and save the dashboard
+1. Click the back arrow in the top left corner
+1. Back in the dashboard, click in the top right corner the bar graph with the + symbol icon to Add a panel
+1. Select **Add a new row**
+1. Hoover over the text "Row title" untill you see a cog icon appear and click it.
+1. In the new windows, type under Title $CVMName and in the Repeat for, select the just created variable CVMName
+
+   ![Grafana UI - Variables](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/4.png)
+
+1. Click **Update**
+1. This will have, depending on the amount of CVMs, X amount of the same graphs. Just the title has changed.
+1. On the dashboard, the variable name is mentioned in blue, example **CVMName**
+1. Click the text **All** and select only one of the CVMs. Now only one graph should been shown on the dashboard
+1. Click the Graph and hit the "E" key on your keyboard. This opens the edit graph interface.
+1. In the Query field, change the field value of cvm-name into $CVMName so it uses the variable as the selection for the query.
+1. In the Title field also change/add the variable $CVMName in the field and click Apply.
+1. Back on the dashboard, change the Variable bck to **All** and you should now see four different graphs and titles.
+1. Revert back into just showing one CVM
+1. Click again the graph and then type "P" and "D" to duplicate the graph.
+1. Click the duplicated graph and type "E" to edit the graph
+1. Make two changes
+    1. Change the Query. Exchange **cpu** for **cpu_ready** to show that value.
+    2. Change Title field, to reflect the CPU Ready
+
+       ![Grafana UI - Variables](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/5.png)
+
+1. Click Apply
+1. Repeat steps 22 till 25 for the other values that are grabbed and pushed in the InfluxDB. Use these values
+    1. Change the Query.
+        
+        For RAM
+        - ram as the query
+
+        For IOPS Read
+        - io_read as the query
+
+        For IOPS Write
+        - io_write as the query
+
+    2. Change Title field, to reflect the title of the graphs
+    3. Change the Unit for IOPS related value to **Throughput -> I/O ops/sec**
+1. When all graphs are added, they can be drag and dropped, and resized to have the dashboard that is needed.
+
+    ![Grafana UI - Variables](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/6.png)
+
+1. Changing the Variable to **All** on the dashboard will show the same built graphs for all CVMS.
+
+    ![Grafana UI - Variables](https://github.com/wessenstam/cvm_influxdb_grafana/blob/main/images/7.png)
